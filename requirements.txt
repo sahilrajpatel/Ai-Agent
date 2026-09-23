@@ -1,0 +1,47 @@
+"""
+Chat with the agent and give it tasks like:
+    - "open youtube.com"
+    - "play Attention Whistle Song on youtube"
+    - "search python tutorials on google"
+    - "send a whatsapp message to Mom saying I'll be late"
+    - "fill the form on <url> with name Rahul and email rahul@test.com"
+
+Run:
+    python main.py
+
+Type 'exit' to quit. A browser window will open automatically the first
+time you ask it to do something in the browser.
+"""
+from langchain_core.messages import HumanMessage
+
+from src.agent_graph import build_graph
+from src.browser import close_browser
+
+graph = build_graph()
+
+
+def main():
+    print("AI Automation Agent is ready.")
+    print("Tell it what to do (e.g. 'play a lofi song on youtube').")
+    print("Type 'exit' to quit.\n")
+
+    chat_history = []
+
+    try:
+        while True:
+            user_input = input("You: ")
+            if user_input.lower() in ["exit", "quit"]:
+                print("Bye!")
+                break
+
+            chat_history.append(HumanMessage(content=user_input))
+            result = graph.invoke({"messages": chat_history})
+            chat_history = result["messages"]
+
+            print("Agent:", chat_history[-1].content, "\n")
+    finally:
+        close_browser()
+
+
+if __name__ == "__main__":
+    main()

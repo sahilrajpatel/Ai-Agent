@@ -1,0 +1,40 @@
+from langchain_core.tools import tool
+
+from src.browser import get_page
+
+
+@tool
+def send_whatsapp_message(contact_name: str, message: str) -> str:
+    """Send a WhatsApp message to someone using WhatsApp Web.
+    contact_name must match exactly how the contact/group name shows up in
+    your WhatsApp chat list. The first time this runs you'll need to scan
+    the QR code on the browser screen to log in - after that it stays
+    logged in."""
+    page = get_page()
+    page.goto("https://web.whatsapp.com")
+
+    search_box = page.locator("div[contenteditable='true'][data-tab='3']")
+    try:
+        search_box.wait_for(timeout=30000)
+    except Exception:
+        return (
+            "WhatsApp Web isn't ready. If a QR code is showing, scan it with "
+            "your phone (WhatsApp > Linked Devices) and try again."
+        )
+
+    search_box.click()
+    search_box.fill(contact_name)
+    page.wait_for_timeout(1500)
+
+    contact = page.locator(f"span[title='{contact_name}']").first
+    if contact.count() == 0:
+        return f"Couldn't find a contact/chat named '{contact_name}'."
+    contact.click()
+    page.wait_for_timeout(1000)
+
+    message_box = page.locator("div[contenteditable='true'][data-tab='10']")
+    message_box.click()
+    message_box.fill(message)
+    page.keyboard.press("Enter")
+
+    return f"Message sent to {contact_name}."
